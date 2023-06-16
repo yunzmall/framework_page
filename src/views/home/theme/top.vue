@@ -68,6 +68,7 @@
             title="删除导航"
             style="margin-left: 0px;"
             @click="delNav(index)"
+            v-if="form.navigation.length > 1"
           ></el-button>
           <el-button
             icon="el-icon-upload2"

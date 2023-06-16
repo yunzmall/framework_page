@@ -142,6 +142,9 @@
               style="color:#999"
               >记住用户名
             </el-checkbox>
+            <router-link to="/register" v-if="site.register_open == '1'">
+              <span class="register">注册账号</span>
+            </router-link>
             <router-link to="/forget">
               <span class="forget">忘记密码？</span>
             </router-link>
@@ -304,60 +307,66 @@ export default {
       } else {
         this.loginForm.remember = 0;
       }
-      $http
-        .post("/admin/login", {
-          username: this.loginForm.username,
-          password: base64_encode(this.loginForm.password),
-          captcha: this.loginForm.captcha,
-          mobile: this.loginForm.mobile,
-          code: this.loginForm.code,
-          remember:this.loginForm.remember,
-        })
-        .then(response => {
-          if (response.result === 1) {
-            this.loading = false;
-            if (
-              !this.fun.isTextEmpty(response.data) &&
-              response.data.status === -5
-            ) {
-              if(response.msg && response.msg!='') {
-                Message.error(response.msg);
+      try {
+        $http
+          .post("/admin/login", {
+            username: this.loginForm.username,
+            password: base64_encode(this.loginForm.password),
+            captcha: this.loginForm.captcha,
+            mobile: this.loginForm.mobile,
+            code: this.loginForm.code,
+            remember:this.loginForm.remember,
+          })
+          .then(response => {
+            if (response.result === 1) {
+              this.loading = false;
+              if (
+                !this.fun.isTextEmpty(response.data) &&
+                response.data.status === -5
+              ) {
+                if(response.msg && response.msg!='') {
+                  Message.error(response.msg);
+                }
+                return;
               }
-              return;
-            }
-            // 是否提示修改密码
-            if(!this.fun.isTextEmpty(response.data) && response.data.pwd_remind == 1) {
-              this.$store.dispatch("IsOpenPwd", true);
-              this.$store.dispatch("tips_word", response.data.msg);
-              return;
-            }
-            if (!this.fun.isTextEmpty(response.data) && response.data.url) {
-              window.location.href = response.data.url;
-              return;
-            }
+              // 是否提示修改密码
+              if(!this.fun.isTextEmpty(response.data) && response.data.pwd_remind == 1) {
+                this.$store.dispatch("IsOpenPwd", true);
+                this.$store.dispatch("tips_word", response.data.msg);
+                return;
+              }
+              if (!this.fun.isTextEmpty(response.data) && response.data.url) {
+                window.location.href = response.data.url;
+                return;
+              }
 
-            this.$store.dispatch("GenerateRoutes", 0);
-            if (this.remember_pwd) {
-              this.loginForm.remember = 1;
-              this.setlocalStorage(this.loginForm.username);
+              this.$store.dispatch("GenerateRoutes", 0);
+              if (this.remember_pwd) {
+                this.loginForm.remember = 1;
+                this.setlocalStorage(this.loginForm.username);
+              } else {
+                // 点击忘记密码，清空localStorage里的存储
+                this.setlocalStorage("");
+              }
+              this.$router.push(this.fun.getUrl("Manage"));
             } else {
-              // 点击忘记密码，清空localStorage里的存储
-              this.setlocalStorage("");
+              if(response.msg && response.msg!='') {
+                MessageBox.alert(response.msg);
+              }
+              if(this.captcha.status == true) {
+                this.freshCode();
+              }
+              this.loading = false;
             }
-            this.$router.push(this.fun.getUrl("Manage"));
-          } else {
-            if(response.msg && response.msg!='') {
-              MessageBox.alert(response.msg);
-            }
-            if(this.captcha.status == true) {
-              this.freshCode();
-            }
+          })
+          .catch(() => {
             this.loading = false;
-          }
-        })
-        .catch(() => {
-          this.loading = false;
-        });
+          });
+      } catch (error) {
+        console.log(error);
+        this.$message.error('密码输入错误');
+        this.loading = false;
+      }
     },
     showPwd() {
       if (this.passwordType === "password") {
@@ -532,6 +541,13 @@ $light_gray: #eee;
   width: 100%;
   background-color: $bg;
   // overflow: hidden;
+  .register {
+    font-size: 14px;
+    color: #409eff;
+    cursor: pointer;
+    position: absolute;
+    right: 7rem;
+  }
   .forget {
     font-size: 14px;
     color: #409eff;

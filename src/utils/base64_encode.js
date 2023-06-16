@@ -62,6 +62,9 @@ module.exports = function base64_encode (stringToEncode) { // eslint-disable-lin
   enc = tmpArr.join('')
 
   var r = stringToEncode.length % 3
-
-  return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3)
+  if((r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3)){
+    return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3)
+  }else{
+    throw new Error()
+  }
 }

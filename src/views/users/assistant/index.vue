@@ -139,6 +139,7 @@
             v-model="form.password"
             type="password"
           ></el-input>
+          <div class="tip special" v-if="password_verify == 1">注: 登录密码设置长度至少为8位，要求包括数字，字母，大小写和特殊符号包括(.!~@#$%^&*?()+_- )并且不支持中文字符</div>
         </el-form-item>
         <el-form-item label="确认新密码" prop="re_password">
           <el-input
@@ -147,6 +148,7 @@
             v-model="form.re_password"
             type="password"
           ></el-input>
+          <div class="tip special" v-if="password_verify == 1">注: 登录密码设置长度至少为8位，要求包括数字，字母，大小写和特殊符号包括(.!~@#$%^&*?()+_- )并且不支持中文字符</div>
         </el-form-item>
       </el-form>
 
@@ -199,6 +201,7 @@ export default {
           { validator: validatePass2, required: true, trigger: "blur" }
         ]
       },
+      password_verify:"",
       pageSize: 0,
       current_page: 0,
       total: 0
@@ -206,6 +209,9 @@ export default {
   },
   created() {
     this.currentChange(1);
+  },
+  mounted(){
+    this.regPassword();
   },
   destroyed() {},
   methods: {
@@ -326,6 +332,22 @@ export default {
             this.$message({ type: "info", message: "已取消启用" });
           });
       }
+    },
+    // 校验是否开启密码强度
+    regPassword() {
+      $http
+        .post("/admin/system/login_set", {}, "加载中")
+        .then(response => {
+          if (response.result == 1) {
+            this.password_verify = parseInt(response.data.password_verify)
+          } else {
+            if (response.msg && response.msg != "") {
+              this.$message.error(response.msg);
+            }
+          }
+        })
+        .catch(() => {
+        });
     }
   }
 };
@@ -349,5 +371,8 @@ export default {
     font-size: 12px;
     color: #999;
   }
+}
+.special{
+  color: #f56c6c !important;
 }
 </style>

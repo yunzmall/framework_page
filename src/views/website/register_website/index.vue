@@ -3,18 +3,6 @@
     <div class="right-head">
       <div class="right-head-con1">注册站点</div>
     </div>
-    <el-row v-if="type == 'register'">
-      <el-form ref="form" :model="form" :rules="rules" label-width="15%">
-        <el-form-item>
-          <el-button type="primary" @click="redirect(1)" plain
-            >免费版</el-button
-          >
-          <el-button type="primary" @click="redirect(2)" plain
-            >授权版</el-button
-          >
-        </el-form-item>
-      </el-form>
-    </el-row>
     <el-form
       ref="form"
       :model="form"
@@ -22,6 +10,12 @@
       label-width="15%"
       v-if="type == 'auth'"
     >
+      <el-form-item label="当前域名" prop="domain">
+        <span>{{ domain  }}</span>
+      </el-form-item>
+      <el-form-item label="授权状态">
+        <span style="color:coral">已授权</span>
+      </el-form-item>
       <el-form-item label="key" prop="key">
         <el-input
           v-model="key"
@@ -30,16 +24,32 @@
         ></el-input>
       </el-form-item>
 
-      <el-form-item label="密钥" prop="secret">
+      <el-form-item label="密钥">
         <el-input
-          v-model="secret"
+          value="********************"
           placeholder="请输入密钥"
           style="width:70%"
         ></el-input>
       </el-form-item>
+      <el-form-item prop="plugins" v-if="plugins != ''">
+      <span slot="label"> 
+        <span>已授权插件:</span>
+      </span>
+      <div v-for="(item, index, key) in plugins" :key="item.id">
+        {{ index +1  }}、{{ item.name }} <span style="color: #0b1eee">(已授权 {{ item.count }} 个): </span> {{ item.text }}
+      </div>
+      </el-form-item>  
 
-      <el-form-item>
-        <el-button type="success" @click="reset">重置</el-button>
+      <el-form-item prop="unauthorized" v-if="unauthorized != ''">
+        <span slot="label">
+          <span style="color:coral">未授权插件:</span>
+        </span>
+        <div style="color:coral">{{ unauthorized }}</div>
+        <div  style="color: #ff0000; font-weight: bold">
+          商城系统授权包含应用授权、插件授权两部分，使用未授权的商城系统应用或者插件都不具备合法性！我司保留对其使用系统停止升级、关闭、甚至对其媒体曝光和追究法律责任的起诉权利。
+          <br>
+我国《中华人民共和国刑法》第二百一十七条规定： 以营利为目的，有下列侵犯著作权情形之一，违法所得 数额较大或者有其他严重情节的，处三年以下有期徒刑 或者拘役，并处或者单处罚金；违法所得数额巨大或者 有其他特别严重情节的，处三年以上七年以下有期徒刑， 并处罚金： （一）未经著作权人许可，复制发行其文字作品、音乐、 电影、电视、录像作品、计算机软件及其他作品的； （二）出版他人享有专有出版权的图书的； （三）未经录音录像制作者许可，复制发行其制作的录 音录像的； （四）制作、出售假冒他人署名的美术作品的。
+        </div>
       </el-form-item>
     </el-form>
     <el-form
@@ -49,6 +59,12 @@
       label-width="15%"
       v-if="type == 'free'"
     >
+      <el-form-item label="当前域名" prop="domain">
+        <span>{{ domain }}</span>
+      </el-form-item>
+      <el-form-item label="授权状态">
+        <span style="color:coral">未授权，请填写下方信息，提交后自动完成商城授权!</span>
+      </el-form-item>
       <el-form-item label="公司名称" prop="name">
         <el-input
           v-model="form.name"
@@ -186,6 +202,10 @@ export default {
     return {
       key: "", //key
       secret: "", //密钥
+      unauthorized: "",
+      domain: "",
+      plugins: [],
+      domain: '',
       captcha_text: "获取验证码",
       form: {
         name: "",
@@ -384,49 +404,16 @@ export default {
       $http
         .get("/admin/system/siteRegister/index", {}, "加载中")
         .then(response => {
+          this.domain = response.data.domain;
           this.type = response.data.page.type;
           this.province_list = response.data.province.data;
           this.key = response.data.set.key;
-          this.secret = response.data.set.secret;
+          this.unauthorized = response.data.unauthorized;
+          this.plugins = response.data.plugins;
         })
         .catch(() => {
         });
     },
-    reset() {
-      let data = { key: this.key, secret: this.secret };
-      $http
-        .post("/admin/system/siteRegister/reset", { data: data })
-        .then(response => {
-          if (response.result == 1) {
-            if(response.msg && response.msg!='') {
-              this.$message.success(response.msg);
-            }
-            this.resetAgain();
-          } else {
-            if(response.msg && response.msg!='') {
-              this.$message.error(response.msg);
-            }
-          }
-        })
-        .catch(() => {
-          console.log("获取数据失败！");
-        });
-    },
-    resetAgain() {
-      $http
-        .post("/admin/system/siteRegister/reset")
-        .then(response => {
-          if (response.result == 1) {
-            window.location.reload();
-          } else {
-            if(response.msg && response.msg!='') {
-              this.$message.error(response.msg);
-            }
-          }
-        })
-        .catch(() => {
-        });
-    }
   }
 };
 </script>

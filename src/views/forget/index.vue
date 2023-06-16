@@ -198,7 +198,7 @@ export default {
         return;
       }
       $http
-        .post("/admin/sendCode/", { mobile: this.form.mobile,username:this.form.username }, " ")
+        .post("/admin/sendCode", { mobile: this.form.mobile,username:this.form.username }, " ")
         .then(response => {
           if (response.result === 1) {
             this.getTimer();

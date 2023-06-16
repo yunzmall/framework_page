@@ -128,6 +128,7 @@
           label-width="15%"
         >
           <el-form-item label="" prop="type">
+             <el-radio-group v-model="distance_form.type" @input="radioChange">
             <el-radio v-model="distance_form.type" :label="0">关闭</el-radio>
             <el-radio v-model="distance_form.type" :label="2"
               >阿里云OSS</el-radio
@@ -135,6 +136,10 @@
             <el-radio v-model="distance_form.type" :label="4"
               >腾讯云存储</el-radio
             >
+            <el-radio v-model="distance_form.type" :label="5"
+            >华为云存储</el-radio
+            >
+            </el-radio-group>
             <div class="tip" v-if="distance_form.type!=0">
               把/static/upload/images/整个images目录上传到对象存储上
             </div>
@@ -143,6 +148,9 @@
             </div>
              <div class="tip" v-if="distance_form.type==4">
               腾讯云对象存储上传教程,请前往腾讯云了解
+            </div>
+            <div class="tip" v-if="distance_form.type==5">
+              华为云对象存储上传教程,请前往华为云了解
             </div>
           </el-form-item>
 
@@ -167,8 +175,9 @@
               </el-form-item>
               <el-form-item label="Access Key Secret" prop="secret">
                 <el-input
+
                   v-model="distance_form.alioss.secret"
-                  @change="getBucket"
+                  @blur="keyBlur"
                   style="width:70%;"
                   placeholder="请输入Access Key Secret"
                 ></el-input>
@@ -252,6 +261,7 @@
               </el-form-item>
               <el-form-item label="SecretKEY" prop="secretkey">
                 <el-input
+
                   v-model="distance_form.cos.secretkey"
                   style="width:70%;"
                   placeholder="请输入SecretKEY"
@@ -296,6 +306,52 @@
                   ‘/’例：http://abc.com
                 </div>
               </el-form-item>
+            </div>
+          </el-form>
+
+          <el-form
+                  ref="obs"
+                  :model="distance_form.obs"
+                  :rules="rules"
+                  label-width="15%"
+          >
+            <div v-if="distance_form.type == 5">
+              <el-form-item label="key" prop="key">
+                <el-input
+                        v-model="distance_form.obs.key"
+                        style="width:70%;"
+                        placeholder="请输入Access Key Id"
+                ></el-input>
+                <div class="tip">
+                  Access Key Id 是您项目的安全秘钥，具有该账户完全的权限，请妥善保管
+                </div>
+              </el-form-item>
+              <el-form-item label="secret" prop="secret">
+                <el-input
+
+                        v-model="distance_form.obs.secret"
+                        style="width:70%;"
+                        placeholder="请输入Secret Access Key"
+                ></el-input>
+                <div class="tip">
+                  Secret Access Key 是您项目的安全秘钥，具有该账户完全的权限，请妥善保管
+                </div>
+              </el-form-item>
+              <el-form-item label="Bucket" prop="bucket">
+                <el-input
+                        v-model="distance_form.obs.bucket"
+                        style="width:70%;"
+                        placeholder="请输入Bucket"
+                ></el-input>
+                <div class="tip">请保证bucket为可公共读取的</div>
+              </el-form-item>
+                <el-form-item label="Endpoint" prop="endpoint">
+                    <el-input
+                            v-model="distance_form.obs.endpoint"
+                            style="width:70%;"
+                            placeholder="请输入Endpoint"
+                    ></el-input>
+                </el-form-item>
             </div>
           </el-form>
 
@@ -394,6 +450,11 @@ export default {
           bucket: "",
           local: "",
           url: ""
+        },
+        obs: {
+          key: "",
+          secret: "",
+          bucket: "",
         }
       },
       rules: {
@@ -446,6 +507,13 @@ export default {
             trigger: "change"
           }
         ],
+          endpoint: [
+              {
+                  required: true,
+                  message: "请输入endpoint",
+                  trigger: "change"
+              }
+          ],
         internal: [
           {
             required: true,
@@ -481,7 +549,8 @@ export default {
             trigger: "blur"
           }
         ]
-      }
+      },
+      is_auth:false
     };
   },
   created() {
@@ -511,8 +580,25 @@ export default {
               this.distance_form.type = response.data.type;
               this.distance_form.alioss = response.data.alioss;
               this.distance_form.cos = response.data.cos;
+              if(response.data.obs) {
+                this.distance_form.obs = response.data.obs;
+                  if(this.distance_form.obs.key ){
+                    this.distance_form.obs.secret = '**********'
+                  }
+                }
+              if(this.distance_form.alioss.key){
+                this.distance_form.alioss.secret = '**********'
+              }
+              if(this.distance_form.cos.secretid){
+                this.distance_form.cos.secretkey = '**********'
+              }
             }
-            this.getBucket();
+            if(this.distance_form.type == 2) {
+                if(this.distance_form.alioss.key && this.distance_form.alioss.secret){
+                      this.is_auth = true
+                      this.getBucket()
+               }
+            }
           } else {
             if(response.msg && response.msg!='') {
               this.$message.error(response.msg);
@@ -557,8 +643,10 @@ export default {
           dataJSON = this.distance_form;
           if (this.distance_form.type == 2) {
             formName = "alioss";
-          } else {
+          } else if (this.distance_form.type == 4) {
             formName = "cos";
+          } else {
+            formName = "obs";
           }
           break;
         case "test":
@@ -568,12 +656,18 @@ export default {
               alioss: this.distance_form.alioss
             };
             formName = "alioss";
-          } else {
+          } else if (this.distance_form.type == 4) {
             url = "/admin/system/cos";
             dataJSON = {
               cos: this.distance_form.cos
             };
             formName = "cos";
+          } else {
+            url = "/admin/system/obs";
+            dataJSON = {
+              obs: this.distance_form.obs
+            };
+            formName = "obs";
           }
           break;
       }
@@ -617,7 +711,8 @@ export default {
           "/admin/system/bucket",
           {
             key: this.distance_form.alioss.key,
-            secret: this.distance_form.alioss.secret
+            secret: this.distance_form.alioss.secret,
+            is_auth:this.is_auth
           },
           " "
         )
@@ -635,6 +730,18 @@ export default {
           // this.$message.error("获取失败!");
           console.error(err);
         });
+    },
+    radioChange(val){
+      if(val == 2 && this.distance_form.alioss.key && this.distance_form.alioss.secret){
+          this.is_auth = true
+          this.getBucket()
+      }
+    },
+    keyBlur(){
+            if(this.distance_form.type == 2 && this.distance_form.alioss.key && this.distance_form.alioss.secret){
+          this.is_auth = false
+          this.getBucket()
+      }
     }
   }
 };

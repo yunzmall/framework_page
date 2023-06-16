@@ -53,7 +53,15 @@ const permission = {
         let accessedRouters = [];
         if(data === 1){
           accessedRouters = asyncRouterMap;
+        }else {
+          // 根据接口（admin/index）中的 role 为0则没有权限(则 isRoleHidden: true)，为1有权限
+          for(let item of constantRouterMap) {
+            if(item.children) {
+              item.children = item.children.filter(cItem => !cItem.isRoleHidden);
+            }
+          } 
         }
+
         commit('SET_ROUTERS', accessedRouters);
         resolve()
       })

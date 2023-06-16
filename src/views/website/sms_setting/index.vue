@@ -12,6 +12,7 @@
         <el-radio v-model="all_form.type" :label="2">阿里大鱼</el-radio>
         <el-radio v-model="all_form.type" :label="3">阿里云</el-radio>
         <el-radio v-model="all_form.type" :label="4">腾讯云</el-radio>
+        <el-radio v-model="all_form.type" :label="6">elisoftsms</el-radio>
       </el-form-item>
 
       <div v-if="all_form.type == 1">
@@ -173,7 +174,7 @@
       </div>
 
       <div v-if="all_form.type == 4">
-        
+
         <el-form-item label="SDKAppID" prop="tx_sdkappid">
           <el-input
             v-model="all_form.tx_sdkappid"
@@ -213,6 +214,30 @@
           <el-input
             v-model="all_form.tx_templateCodeLogin"
             placeholder="请输入登录模板编号"
+            style="width:70%;"
+          ></el-input>
+        </el-form-item>
+      </div>
+
+      <div v-if="all_form.type == 6">
+        <el-form-item label="账号" prop="elisoft_account">
+          <el-input
+            v-model="all_form.elisoft_account"
+            placeholder="请输入账号"
+            style="width:70%;"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="认证密钥" prop="elisoft_password">
+          <el-input
+            v-model="all_form.elisoft_password"
+            placeholder="请输入认证密钥"
+            style="width:70%;"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="短信签名" prop="elisoft_signname">
+          <el-input
+            v-model="all_form.elisoft_signname"
+            placeholder="请输入短信签名"
             style="width:70%;"
           ></el-input>
         </el-form-item>
@@ -263,6 +288,9 @@ export default {
         tx_templateCode:"",
         tx_templateCodeForget:"",
         tx_templateCodeLogin:"",
+        elisoft_account: "",
+        elisoft_password: "",
+        elisoft_signname: "",
       },
       rules: {
         account: [
@@ -333,6 +361,15 @@ export default {
         ],
         tx_templateCodeLogin: [
           { required: true, message: "请输入登录模板编号", trigger: "blur" }
+        ],
+        elisoft_account: [
+          { required: true, message: "请输入账号", trigger: "blur" }
+        ],
+        elisoft_password: [
+          { required: true, message: "请输入认证密钥", trigger: "blur" }
+        ],
+        elisoft_signname: [
+          { required: true, message: "请输入短信签名", trigger: "blur" }
         ],
       }
     };

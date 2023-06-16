@@ -29,7 +29,7 @@
           type="password"
           style="width:70%"
         ></el-input>
-        <div class="tip special">特殊符号包括(.!~@#$%^&*?()+_- )</div>
+        <div class="tip special"><span v-if="password_verify == 1">注: 已开启密码校验</span> 特殊符号包括(.!~@#$%^&*?()+_- )</div>
       </el-form-item>
       <el-form-item v-if="!isEdit" label="确认密码" prop="re_password">
         <el-input
@@ -199,6 +199,29 @@
       </span>
     </el-dialog>
     <!--end-->
+
+    <!--修改手机号-->
+    <el-dialog :visible.sync="mobileDialogVisible" width="45%" title="修改手机号">
+      <el-form label-width="25%" >
+        <el-form-item label="原手机号" >
+          <span>{{form.mobile}}</span>
+          <el-button type="primary" @click="getCode" v-show="show">获取验证码</el-button>
+          <el-button v-show="!show" type="primary" disabled>
+            {{ count }}秒后重新获取
+          </el-button>
+        </el-form-item>
+        <el-form-item label="短信验证码" >
+          <el-input placeholder="请输入短信验证码" v-model="sms_code" style="width:60%;"></el-input>
+        </el-form-item>
+        <el-form-item label="新手机号" >
+          <el-input placeholder="请输入新手机号" v-model="new_mobile" style="width:60%;"></el-input>
+        </el-form-item>
+      </el-form>
+      <div class="dialog-footer-pane">
+        <el-button @click="mobileDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="sureMobile">确 定 </el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -269,7 +292,13 @@ export default {
         ],
         mobile: { required: true, message: "请输入手机" }
       },
-      uid: ""
+      uid: "",
+      password_verify:"",
+      mobileDialogVisible: false, //修改手机号弹窗
+      sms_code:"", //短信验证码
+      new_mobile:"", //请输入新手机号
+      show: true,
+      count: "",
     };
   },
   computed: {},
@@ -279,6 +308,9 @@ export default {
       this.getData();
     }
     this.currentChange(1);
+  },
+  mounted(){
+    this.regPassword();
   },
   methods: {
     getData() {
@@ -465,6 +497,86 @@ export default {
           return false;
         }
       });
+    },
+    // 校验是否开启密码强度
+    regPassword() {
+      $http
+        .post("/admin/system/login_set", {}, "加载中")
+        .then(response => {
+          if (response.result == 1) {
+            this.password_verify = parseInt(response.data.password_verify)
+          } else {
+            if (response.msg && response.msg != "") {
+              this.$message.error(response.msg);
+            }
+          }
+        })
+        .catch(() => {
+        });
+    },
+    updateMobile() {
+      this.new_mobile = "";
+      this.sms_code = "";
+      this.mobileDialogVisible = true;
+    },
+    sureMobile() {
+      this.testCode();
+    },
+    testCode() {
+      if (!this.sms_code) {
+        this.$message.error("请输入验证码");
+        return;
+      }
+      if (!this.new_mobile) {
+        this.$message.error("请输入新手机号");
+        return;
+      }
+      $http.post("/admin/checkCode/",{ mobile: this.form.mobile, code: this.sms_code }," ").then(response => {
+          if (response.result === 1) {
+            if(this.new_mobile !== '' && this.sms_code !== '') {
+              this.form.mobile = this.new_mobile;
+            }
+            this.mobileDialogVisible = false;
+            this.$message.success("修改成功");
+          } else {
+            this.$message.error(response.msg);
+          }
+        }).catch(err => {
+          console.log(err);
+        });
+    },
+    getCode() {
+      if (this.fun.isMoblie(this.form.mobile)) {
+        this.$message.error("请输入正确的手机号码");
+        return;
+      }
+      $http.post("/admin/sendCode/", { mobile: this.form.mobile,username:this.form.username }, " ").then(response => {
+          if (response.result) {
+            this.$message.success(response.msg);
+            this.getTimer();
+          } else {
+            this.$message.error(response.msg);
+          }
+        }).catch(err => {
+          console.log(err);
+        });
+    },
+    // 倒计时
+    getTimer() {
+      const TIME_COUNT = 60;
+      if (!this.timer) {
+        this.count = TIME_COUNT;
+        this.show = false;
+        this.timer = setInterval(() => {
+          if (this.count > 0 && this.count <= TIME_COUNT) {
+            this.count--;
+          } else {
+            this.show = true;
+            clearInterval(this.timer);
+            this.timer = null;
+          }
+        }, 1000);
+      }
     }
   }
 };
@@ -552,5 +664,16 @@ export default {
 }
 .special{
   color: #f56c6c !important;
+}
+
+//修改手机号
+.dialog-footer-pane {
+  display: flex;
+  justify-content:center;
+  margin: 50px 0 ;
+
+  .el-button {
+    margin-right: 20px;
+  }
 }
 </style>

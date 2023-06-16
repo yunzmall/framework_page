@@ -92,7 +92,7 @@
             type="text"
             v-model="form.old_password"
           ></el-input>
-          <div class="tip">不填则不修改密码</div>
+          <div class="tip special">不填则不修改密码</div>
         </el-form-item>
         <el-form-item label="新密码" prop="password" v-if="form.old_password">
           <el-input
@@ -100,6 +100,7 @@
             type="text"
             v-model="form.password"
           ></el-input>
+          <div class="tip special">注: 登录密码设置长度至少为8位，要求包括数字，字母，大小写和特殊符号包括(.!~@#$%^&*?()+_- )并且不支持中文字符</div>
         </el-form-item>
         <el-form-item
           label="确认新密码"
@@ -111,6 +112,7 @@
             type="text"
             v-model="form.re_password"
           ></el-input>
+          <div class="tip special">注: 登录密码设置长度至少为8位，要求包括数字，字母，大小写和特殊符号包括(.!~@#$%^&*?()+_- )并且不支持中文字符</div>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -238,7 +240,23 @@ export default {
           console.log(err);
         });
     },
+    // 判断是否是中文符号
+    isHaveChina(str) {
+      if (escape(str).indexOf("%u") < 0) {
+          return false;
+      } else {
+        return true;
+      }
+    },
     changePwd() {
+      for(let key in this.form){
+        if(key !== 'username') {  
+          if(this.isHaveChina(this.form[key])){
+            this.$message.error("密码不能中文符号!");
+            return;
+          };
+        }
+      }
       this.$refs["form"].validate(valid => {
         if (valid) {
           $http
@@ -371,5 +389,8 @@ export default {
 .tip {
   color: #999;
   font-size: 12px;
+}
+.special{
+  color: #f56c6c !important;
 }
 </style>

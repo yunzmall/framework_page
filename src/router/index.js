@@ -30,6 +30,8 @@ import nestedRouter from "./modules/nested";
     noCache: true                if true, the page will no be cached(default is false)
     breadcrumb: false            if false, the item will hidden in breadcrumb(default is true)
   }
+
+  isRoleHidden: true  根据接口（admin/index）中的 role 为0则没有权限(则 isRoleHidden: true)，为1有权限
 **/
 export const asyncRouterMap = [
   {
@@ -72,6 +74,12 @@ export const asyncRouterMap = [
         component: () => import("@/views/website/register_website/index"),
         name: "register_website",
         meta: { title: "注册站点", icon: "component" }
+      },
+      {
+        path: "white_list",
+        component: () => import("@/views/website/white_list/index"),
+        name: "white_list",
+        meta: { title: "IP白名单", icon: "guide" }
       },
       {
         path: "system_upgrade",
@@ -240,7 +248,37 @@ export const asyncRouterMap = [
         hidden: true
       },
     ]
-  }
+  },
+  {
+    path: "/meal",
+    component: Layout,
+    redirect: "/meal/list",
+    name: "Meal",
+    meta: {
+      title: "套餐管理",
+      icon: "peoples"
+    },
+    children: [
+      {
+        path: "list/index",
+        component: () => import("@/views/meal/list/index"),
+        name: "List",
+        meta: { title: "套餐列表", icon: "fenleicengji" }
+      },
+      {
+        path: "list/add/:id(\\d+)?",
+        component: () => import("@/views/meal/list/add"),
+        name: "ListAdd",
+        meta: { title: "新增套餐" },
+        hidden: true
+      },{
+        path: "meal_record",
+        component: () => import("@/views/meal/record/index"),
+        name: "RecordIndex",
+        meta: { title: "套餐记录", icon: "jilu3" }
+      }
+    ]
+  },
 ];
 
 export const constantRouterMap = [
@@ -289,6 +327,11 @@ export const constantRouterMap = [
   {
     path: "/forget",
     component: () => import("@/views/forget/index"),
+    hidden: true
+  },
+  {
+    path: "/register",
+    component: () => import("@/views/register/index"),
     hidden: true
   },
   {
@@ -346,6 +389,13 @@ export const constantRouterMap = [
         component: () => import("@/views/platform/recycle/index"),
         name: "recycle",
         meta: { title: "回收站", icon: "list" }
+      },
+      {
+        path: "set/index",
+        component: () => import("@/views/platform/set/index"),
+        name: "set",
+        isRoleHidden: true,
+        meta: { title: "基础设置", icon: "shezhi" }
       }
     ]
   },

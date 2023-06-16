@@ -249,11 +249,12 @@ export default {
         });
     },
     toShop(item) {
-      let routeData = this.$router.resolve({
-        path: "/blank",
-        query: { id: item.id }
-      });
-      window.open(routeData.href, "_blank");
+      let url = this.fun.getSiteRoot() + "/admin/shop?route=survey.survey.index&uniacid=" + item.id;
+      // let routeData = this.$router.resolve({
+      //   path: "/blank",
+      //   query: { id: item.id }
+      // });
+      window.open(url, "_blank");
     },
     stopUse(item) {
       let text = item.status === 0 ? "启用" : "停用";

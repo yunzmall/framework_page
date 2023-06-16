@@ -50,17 +50,25 @@
           ></i>
         </div>
       </el-form-item>
+      <el-form-item label="套餐">
+        <el-select v-model="form.plugins_meal_id" filterable placeholder="请选择" style="width: 20%;">
+          <el-option
+            v-for="item in pluginsMealList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id">
+          </el-option>
+        </el-select>
+      </el-form-item>
       <el-form-item label="有效期" prop="validity_time">
         <el-date-picker
           v-model="form.validity_time"
-          :disabled="is_unlimited || isfounder==0"
+          :disabled="is_unlimited || isfounder==0 || type == 2"
           type="date"
           placeholder="请选择有效期"
           style="width:50%"
         ></el-date-picker>
-        <el-checkbox v-model="is_unlimited" :disabled="isfounder==0" style="width:5%"
-          >无限制
-        </el-checkbox>
+        <el-checkbox v-model="is_unlimited" :disabled="isfounder==0" style="width:5%" v-if="type !== 1 && type !== 2">无限制</el-checkbox>
       </el-form-item>
       <el-form-item>
         <el-button type="success" @click="submitForm('form')">
@@ -104,10 +112,7 @@
           <div>
             <el-radio-group v-model="radio1" size="medium" @change="chooseYear">
               <el-radio-button label="不限"></el-radio-button>
-              <el-radio-button label="2019">2019年</el-radio-button>
-              <el-radio-button label="2018">2018年</el-radio-button>
-              <el-radio-button label="2017">2017年</el-radio-button>
-              <el-radio-button label="2016">2016年</el-radio-button>
+              <el-radio-button :label="item" v-for="(item,index) in yearData" :key="index">{{item}}年</el-radio-button>
             </el-radio-group>
           </div>
 
@@ -187,6 +192,7 @@ export default {
       radio1: "不限", //年
       radio2: "不限", //月
       activeName2: "first",
+      yearData:[], //获取动态年份
       //是否显示弹框
       centerDialogVisible: false,
       pageSize: 0,
@@ -200,7 +206,8 @@ export default {
         validity_time: new Date(),
         img: "",
         // url: "",
-        name: ""
+        name: "",
+        plugins_meal_id:""
       },
       loading: false,
       showDialog: false,
@@ -220,7 +227,9 @@ export default {
           }
         ],
         img: [{ required: true, message: "请选择上传图片", trigger: "blur" }]
-      }
+      },
+      pluginsMealList: [],
+      type: "",  //0为不限制 ,1为不超过,2为指定时间
     };
   },
   created() {
@@ -230,6 +239,13 @@ export default {
       this.getData();
     }
     this.currentChange(1);
+    // 获取套餐
+    this.geTempower();
+    //获取动态年份
+    let year = (new Date()).getFullYear();
+    for(let i = 0; i <= (year - 2016) ;i++){
+      this.yearData.push(year - i)
+    }
   },
   destroyed() {},
   methods: {
@@ -396,7 +412,24 @@ export default {
         this.imgLoading = false;
       }
       return isLt2M;
-    }
+    },
+    // 获取套餐
+    geTempower() {
+      $http.get("/admin/application/getMessage",{}).then(({result,data,msg}) => {
+        if(result) {
+          this.pluginsMealList = data.plugin;
+          if(this.$route.query.type !== "edit") {
+            this.form.validity_time = data.type == 2 ? data.validity_time * 1000 : this.form.validity_time;
+            this.type = data.type;
+          }
+        }else {
+          this.$message.error(msg);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+      });
+    },
   }
 };
 </script>

@@ -537,17 +537,17 @@ export default {
                 }
               } else {
                 if(response.data.status==-1) {
-                  window.location.href = Fun.getSiteRootAdmin();
+                  // window.location.href = Fun.getSiteRootAdmin();
                 }
                 if(response.msg && response.msg!='') {
                   this.$message.error(response.msg);
                 }
-                this.active = 3;
+                // this.active = 3;
               }
             })
             .catch(() => {
-              // this.$message.error(response.msg);
-              this.active = 3;
+              this.$message.error(response.msg);
+              // this.active = 3;
             });
         } else {
           console.log("error submit!!");
